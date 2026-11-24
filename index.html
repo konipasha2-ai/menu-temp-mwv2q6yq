@@ -88,11 +88,12 @@
  function openRecipe(id){const r=allRecipes().find(x=>x.id===id);if(!r)return;state.selected=r;state.portions=r.custom?r.baseServings:(r.sauce?2:2.5);state.missing=new Set();renderDetail();$('#recipeDialog').showModal();}
  function closeRecipe(){$('#recipeDialog').close()}
  function openRecipeId(id){if(!allRecipes().some(r=>r.id===id)){toast('Рецепт по этой ссылке не найден');return false}openRecipe(id);return true}
- function openRecipeFromLocation(){
+ function openRecipeFromLocation(retry=0){
   let id=new URLSearchParams(location.search).get('recipe');
   if(!id){const m=location.hash.match(/^#recipe=(.+)$/);if(m)id=decodeURIComponent(m[1])}
   if(id)return openRecipeId(id);
   if(window.google?.script?.url?.getLocation){google.script.url.getLocation(loc=>{const q=loc?.parameter?.recipe;if(q&&!$('#recipeDialog').open)openRecipeId(q)})}
+  else if(retry<10){setTimeout(()=>openRecipeFromLocation(retry+1),500)}
   return false;
  }
  function updateRecipeCounts(){const all=allRecipes(),sauces=all.filter(r=>r.sauce).length;$('#headerCount').textContent=all.length+' рецептов';$('#statMeals').textContent=all.filter(r=>!r.sauce).length+' блюд';$('#statSauces').textContent=sauces+' '+((sauces%10===1&&sauces%100!==11)?'домашний соус':((sauces%10>=2&&sauces%10<=4&&!(sauces%100>=12&&sauces%100<=14))?'домашних соуса':'домашних соусов'));}
@@ -211,7 +212,7 @@
  $('#addDishForm').addEventListener('submit',saveCustomRecipe);
  $('#addDishDialog').addEventListener('click',e=>{if(e.target===$('#addDishDialog'))$('#addDishDialog').close()});
  window.addEventListener('hashchange',()=>{if(location.hash.startsWith('#recipe='))openRecipeFromLocation();else if($('#recipeDialog').open)$('#recipeDialog').close()});
- updateRecipeCounts();renderCards();updateShoppingBadge();renderPantry();openRecipeFromLocation();
+ updateRecipeCounts();renderCards();updateShoppingBadge();renderPantry();openRecipeFromLocation();setTimeout(()=>openRecipeFromLocation(),900);setTimeout(()=>openRecipeFromLocation(),2500);
  </script>
 </body>
 </html>
